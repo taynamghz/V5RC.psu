@@ -1,0 +1,44 @@
+#include "main.h"
+
+// Define motor and optical sensor
+pros::Motor conveyor_motor(1);  // Replace with your conveyor motor port
+pros::Optical optical_sensor(2); // Replace with your optical sensor port
+
+// Thresholds for blue and red hues
+const int BLUE_HUE_MIN = 180;
+const int BLUE_HUE_MAX = 260;
+const int RED_HUE_MIN = 340;
+const int RED_HUE_MAX = 20;
+
+// Function to check if color is blue
+bool is_blue(int hue) {
+    return hue >= BLUE_HUE_MIN && hue <= BLUE_HUE_MAX;
+}
+
+// Function to check if color is red
+bool is_red(int hue) {
+    return (hue >= RED_HUE_MIN && hue <= 360) || (hue >= 0 && hue <= RED_HUE_MAX);
+}
+
+void operate_conveyor() {
+    // Get the hue value from the optical sensor
+    int hue_value = optical_sensor.get_hue();
+
+    // If the ring is blue, stop the motor at the top
+    if (is_blue(hue_value)) {
+        conveyor_motor.move_relative(100, 100); // Adjust value to stop at top
+    }
+    // If the ring is red, let the conveyor continue moving
+    else if (is_red(hue_value)) {
+        conveyor_motor.move_velocity(100); // Adjust speed as needed
+    }
+}
+
+void opcontrol() {
+    optical_sensor.set_led_pwm(100);  // Turn on the LED for color detection
+    
+    while (true) {
+        operate_conveyor();
+        pros::delay(20);
+    }
+}
