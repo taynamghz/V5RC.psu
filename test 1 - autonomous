@@ -1,0 +1,88 @@
+#include "pros/adi.hpp"
+#include "EZ-Template/api.hpp"
+
+// Motors for both robots and ring handling
+pros::Motor left_drive_motor(1);   // Left drive motor for robot 1
+pros::Motor right_drive_motor(2);  // Right drive motor for robot 1
+pros::Motor intake_motor(3);       // Intake motor for grabbing mobile goal
+pros::Motor arm_motor(4);          // Arm motor for scoring/handling mobile goal
+pros::Motor conveyor_motor(20);    // Conveyor motor for ring handling
+
+// Optical sensor for detecting rings
+pros::Optical optical_sensor(14);  // Optical sensor for detecting ring color
+
+// Thresholds for blue and red hues
+const int BLUE_HUE_MIN = 180;
+const int BLUE_HUE_MAX = 260;
+const int RED_HUE_MIN = 340;
+const int RED_HUE_MAX = 20;
+
+// Check if the detected color is blue
+bool is_blue(int hue) {
+    return hue >= BLUE_HUE_MIN && hue <= BLUE_HUE_MAX;
+}
+
+// Check if the detected color is red
+bool is_red(int hue) {
+    return (hue >= RED_HUE_MIN && hue <= 360) || (hue >= 0 && hue <= RED_HUE_MAX);
+}
+
+// Function to control conveyor based on ring color
+void operate_conveyor() {
+    int hue_value = optical_sensor.get_hue();
+    
+    if (is_blue(hue_value)) {
+        conveyor_motor.move_velocity(100);  // Move conveyor for blue rings
+        pros::delay(380);                   // Allow the ring to travel forward
+        conveyor_motor.move_velocity(0);    // Abrupt stop to toss blue ring
+        pros::delay(300);                   // Delay for tossing effect
+        conveyor_motor.move_velocity(100);  // Resume conveyor movement
+    } 
+    else if (is_red(hue_value)) {
+        conveyor_motor.move_velocity(100);  // Move conveyor normally for red rings
+    } 
+    else {
+        conveyor_motor.move_velocity(100);  // Keep conveyor moving if no color is detected
+    }
+}
+
+// Function to grab mobile goal with each robot
+void grab_mobile_goal() {
+    intake_motor.move(127);  // Activate intake motor to grab the mobile goal
+    pros::delay(1000);       // Adjust based on how long it takes to grab
+    intake_motor.move(0);    // Stop intake motor
+}
+
+// Function to handle robot movement for linked robots
+void move_linked_robots(int speed, int time_ms) {
+    left_drive_motor.move(speed);
+    right_drive_motor.move(speed);
+    pros::delay(time_ms);
+    left_drive_motor.move(0);
+    right_drive_motor.move(0);
+}
+
+// Main autonomous function
+void autonomous() {
+    // Step 1: Move both robots forward to grab the mobile goals
+    move_linked_robots(100, 2000); // Move both robots forward
+    grab_mobile_goal();            // Grab mobile goal on both sides
+
+    // Step 2: Start collecting rings
+    optical_sensor.set_led_pwm(100);  // Turn on LED for color detection
+    conveyor_motor.move_velocity(100); // Start conveyor for ring handling
+
+    // Loop for handling ring collection
+    for (int i = 0; i < 5; i++) {  // Adjust loop iterations based on how many rings to collect
+        operate_conveyor();         // Continuously handle rings (blue toss, red pass through)
+        pros::delay(500);           // Delay between each ring collection cycle
+    }
+}
+
+void opcontrol() {
+    // Operator control, in case you want manual control later
+    while (true) {
+        operate_conveyor();  // Continuously operate the conveyor during opcontrol
+        pros::delay(20);
+    }
+}
