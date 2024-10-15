@@ -1,0 +1,55 @@
+#include "main.h"
+
+// Define motor and optical sensor
+pros::Motor conveyor_motor(9);  // Replace with your conveyor motor port
+pros::Optical optical_sensor(8); // Replace with your optical sensor port
+
+// Thresholds for blue and red hues
+const int BLUE_HUE_MIN = 180;
+const int BLUE_HUE_MAX = 260;
+const int RED_HUE_MIN = 340;
+const int RED_HUE_MAX = 20;
+
+// Function to check if color is blue
+bool is_blue(int hue) {
+    return hue >= BLUE_HUE_MIN && hue <= BLUE_HUE_MAX;
+}
+
+// Function to check if color is red
+bool is_red(int hue) {
+    return (hue >= RED_HUE_MIN && hue <= 360) || (hue >= 0 && hue <= RED_HUE_MAX);
+}
+
+void operate_conveyor() {
+    // Get the hue value from the optical sensor
+    int hue_value = optical_sensor.get_hue();
+
+    // If the ring is blue, reverse the conveyor
+    if (is_blue(hue_value)) {
+        conveyor_motor.move_velocity(-100);  // Reverse the conveyor to remove the blue ring
+        pros::delay(700);  // Allow time for the ring to fully reverse out of the system
+        
+        // Resume normal (forward) movement after reversing
+        conveyor_motor.move_velocity(100);  // Set the motor to move forward again
+    }
+    // If the ring is red, keep the conveyor moving forward at full speed
+    else if (is_red(hue_value)) {
+        conveyor_motor.move_velocity(100);  // Keep conveyor moving forward for red rings
+    }
+    // If no ring detected, maintain forward speed
+    else {
+        conveyor_motor.move_velocity(100);  // Ensure conveyor continues moving forward
+    }
+}
+
+void opcontrol() {
+    optical_sensor.set_led_pwm(100);  // Turn on the LED for color detection
+    
+    // Start the conveyor motor moving forward
+    conveyor_motor.move_velocity(100);  // Start moving forward
+
+    while (true) {
+        operate_conveyor();  // Continuously check the ring's color and adjust conveyor behavior
+        pros::delay(20);
+    }
+}
