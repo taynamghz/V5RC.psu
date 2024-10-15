@@ -1,0 +1,64 @@
+#include "main.h"
+
+// Define motors and optical sensor
+pros::Motor conveyor_motor(20);  // Conveyor motor port
+pros::Motor opening_motor(10);   // Opening motor port
+pros::Optical optical_sensor(14); // Optical sensor port
+
+// Thresholds for blue and red hues
+const int BLUE_HUE_MIN = 180;
+const int BLUE_HUE_MAX = 260;
+const int RED_HUE_MIN = 340;
+const int RED_HUE_MAX = 20;
+
+// Function to check if color is blue
+bool is_blue(int hue) {
+    return hue >= BLUE_HUE_MIN && hue <= BLUE_HUE_MAX;
+}
+
+// Function to check if color is red
+bool is_red(int hue) {
+    return (hue >= RED_HUE_MIN && hue <= 360) || (hue >= 0 && hue <= RED_HUE_MAX);
+}
+
+void operate_conveyor() {
+    // Get the hue value from the optical sensor
+    int hue_value = optical_sensor.get_hue();
+
+    // If the ring is blue, abruptly stop the conveyor to toss the ring
+    if (is_blue(hue_value)) {
+        conveyor_motor.move_velocity(100); // Ensure the conveyor is moving at full speed
+        pros::delay(700);  // Allow the ring to travel a bit forward
+        
+        // Rapidly stop the conveyor to create the tossing effect
+        conveyor_motor.move_velocity(0); 
+        pros::delay(300);  // Wait for a short duration to let the ring be tossed
+        
+        // Resume conveyor movement
+        conveyor_motor.move_velocity(100);
+    }
+    // If the ring is red, keep the conveyor moving at full speed
+    else if (is_red(hue_value)) {
+        conveyor_motor.move_velocity(100); // Keep conveyor moving for red rings
+    }
+    // If no ring detected, maintain current speed
+    else {
+        conveyor_motor.move_velocity(100); // Ensure conveyor continues moving
+    }
+
+    // Always move the opening motor in the same direction
+    opening_motor.move_velocity(100);  // Set the opening motor to always move forward
+}
+
+void opcontrol() {
+    optical_sensor.set_led_pwm(100);  // Turn on the LED for color detection
+    
+    // Start the conveyor motor and opening motor at a default velocity to begin detecting rings immediately
+    conveyor_motor.move_velocity(100);
+    opening_motor.move_velocity(100);  // Ensure the opening motor starts moving
+
+    while (true) {
+        operate_conveyor();  // Continuously check the ring's color and adjust conveyor behavior
+        pros::delay(20);
+    }
+}
