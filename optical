@@ -27,7 +27,7 @@ void operate_conveyor() {
     // If the ring is blue, abruptly stop the conveyor to toss the ring
     if (is_blue(hue_value)) {
         conveyor_motor.move_velocity(100); // Ensure the conveyor is moving at full speed
-        pros::delay(380);  // Allow the ring to travel a bit forward
+        pros::delay(700);  // Allow the ring to travel a bit forward
         
         // Rapidly stop the conveyor to create the tossing effect
         conveyor_motor.move_velocity(0); 
