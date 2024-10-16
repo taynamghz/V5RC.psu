@@ -1,0 +1,71 @@
+#include "main.h"
+
+// Motor and piston definitions
+pros::Motor conveyor_motor(9);  // Conveyor motor port
+pros::Motor opening_motor(12);  // Opening motor port
+pros::Motor drive_motors_left_front(11);
+pros::Motor drive_motors_left_back(12);
+pros::Motor drive_motors_right_front(17);
+pros::Motor drive_motors_right_back(18);
+pros::Motor drive_motors_mid_left(13);
+pros::Motor drive_motors_mid_right(19);
+
+pros::ADIDigitalOut piston_clasp_G('G');  // Piston for stake clasping
+pros::ADIDigitalOut piston_clasp_H('H');  // Piston for stake clasping
+
+// Function for driving straight
+void drive_straight(int velocity, int distance_in_inches) {
+    // Add logic to drive all motors at the same speed to move straight
+}
+
+// Function for turning the robot
+void turn_robot(int velocity, int angle_in_degrees) {
+    // Add logic to turn the robot based on angle
+}
+
+// Autonomous routine to perform the movement sequence
+void autonomous() {
+    // Step 1: Move backwards 28 inches
+    drive_straight(-100, 28);  // Negative velocity for backward movement
+    pros::delay(1000);  // Adjust delay based on movement timing
+
+    // Step 2: Turn 30 degrees to the right
+    turn_robot(100, 30);  // Turn with positive velocity for right turn
+    pros::delay(500);  // Adjust delay based on turn timing
+
+    // Step 3: Move backward 17.5 inches
+    drive_straight(-100, 17.5);
+    pros::delay(800);  // Adjust delay based on movement timing
+
+    // Step 4: Clasp the stake
+    piston_clasp_G.set_value(true);  // Activate pistons G and H to clasp
+    piston_clasp_H.set_value(true);
+    pros::delay(500);  // Adjust delay for clasping action
+
+    // Step 5: Start the conveyor and opening motor to begin picking up rings
+    conveyor_motor.move_velocity(100);
+    opening_motor.move_velocity(100);
+
+    // Step 6: Move forward to original position (reverse the previous turn)
+    turn_robot(100, -30);  // Negative for left turn to straighten
+    pros::delay(500);
+
+    // Step 7: Move forward 7 inches
+    drive_straight(100, 7);
+    pros::delay(400);
+
+    // Step 8: Turn 30 degrees to the right again
+    turn_robot(100, 30);
+    pros::delay(500);
+
+    // Step 9: Move forward another 7 inches
+    drive_straight(100, 7);
+    pros::delay(400);
+}
+
+void opcontrol() {
+    while (true) {
+        // Code for manual control or other operations
+        pros::delay(20);
+    }
+}
